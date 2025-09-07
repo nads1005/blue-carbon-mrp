@@ -23,7 +23,7 @@
   </div>
   <script>
     // 1. Cesium Ion Access Token (replace with your token)
-    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5N2RhYzUxOC1jNzk1LTQ3YTktYjVlMi1iNzliNGY3NTQ2OTciLCJpZCI6MzM5MTM4LCJpYXQiOjE3NTcyNTc1Njl9.upZ1Xgx8iXxMbt2ZA4nCwbGRLqXjHBEBmfdoyqY15LE    echo $env:PATH';
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5N2RhYzUxOC1jNzk1LTQ3YTktYjVlMi1iNzliNGY3NTQ2OTciLCJpZCI6MzM5MTM4LCJpYXQiOjE3NTcyNTc1Njl9.upZ1Xgx8iXxMbt2ZA4nCwbGRLqXjHBEBmfdoyqY15LE';
 
     // 2. Initialize Cesium Viewer with terrain
     (async () => {
@@ -37,10 +37,16 @@
       viewer.scene.highDynamicRange = true;
       viewer.scene.globe.enableLighting = true;
 
-      // 3. Load your own Cesium Ion 3D tileset (async)
-      const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(2275207);
+      // 3. Load public NYC sample tileset
+      const tileset = new Cesium.Cesium3DTileset({
+        url: 'https://assets.cesium.com/43978/tileset.json'
+      });
       viewer.scene.primitives.add(tileset);
-      viewer.zoomTo(tileset);
+      tileset.readyPromise
+        .then(() => {
+          viewer.zoomTo(tileset);
+        })
+        .catch(error => console.error('Tileset load error:', error));
 
       // 4. Date/Time controls to update sun
       document.getElementById('updateSun').onclick = () => {

@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "potential": 250 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.012, 40.707],
+            [-74.012, 40.708],
+            [-74.011, 40.708],
+            [-74.011, 40.707],
+            [-74.012, 40.707]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cesium Solar Potential VR Demo</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+    }
+    #controls {
+      position: absolute; top: 10px; left: 10px; z-index: 1; background: rgba(255,255,255,0.8); padding: 8px; border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="controls">
+    <input type="date" id="datePicker" />
+    <input type="time" id="timePicker" />
+    <button id="updateSun">Update Sun</button>
+  </div>
+  <script>
+    // 1. Cesium Ion Access Token (replace with your token)
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5N2RhYzUxOC1jNzk1LTQ3YTktYjVlMi1iNzliNGY3NTQ2OTciLCJpZCI6MzM5MTM4LCJpYXQiOjE3NTcyNTc1Njl9.upZ1Xgx8iXxMbt2ZA4nCwbGRLqXjHBEBmfdoyqY15LE    echo $env:PATH';
+
+    // 2. Initialize Cesium Viewer with terrain
+    (async () => {
+      // 2. Initialize Cesium Viewer with terrain (async for CesiumJS 1.117+)
+      const terrainProvider = await Cesium.createWorldTerrainAsync();
+      const viewer = new Cesium.Viewer('cesiumContainer', {
+        terrainProvider,
+        timeline: false,
+        animation: false
+      });
+      viewer.scene.highDynamicRange = true;
+      viewer.scene.globe.enableLighting = true;
+
+      // 3. Load your own Cesium Ion 3D tileset (async)
+      const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(2275207);
+      viewer.scene.primitives.add(tileset);
+      viewer.zoomTo(tileset);
+
+      // 4. Date/Time controls to update sun
+      document.getElementById('updateSun').onclick = () => {
+        const date = document.getElementById('datePicker').value;
+        const time = document.getElementById('timePicker').value;
+        if (date && time) {
+          viewer.clock.currentTime = Cesium.JulianDate.fromIso8601(`${date}T${time}Z`);
+          viewer.scene.globe.enableLighting = true;
+        }
+      };
+
+      // 5. Overlay restoration plots dynamically from API
+      fetch('/api/restoration-records')
+        .then(res => res.json())
+        .then(data => Cesium.GeoJsonDataSource.load(data, {
+          stroke: Cesium.Color.WHITE,
+          fill: new Cesium.CallbackProperty(function(time, result) {
+            // Map carbonSequestered (0–2000) to HSL blue gradient
+            const feature = this;
+            const val = feature.properties.carbonSequestered.getValue(time);
+            return Cesium.Color.fromHsl(0.6, 1.0, 0.7 - (val/2000)*0.3, 0.6);
+          }, false)
+        }))
+        .then(ds => viewer.dataSources.add(ds));
+
+      // 6. VR-style navigation & polish
+      viewer.extend(Cesium.viewerFullscreenMixin);
+      viewer.scene.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(-74.01, 40.71, 150), // NYC
+        orientation: { pitch: Cesium.Math.toRadians(-45), heading: 0 }
+      });
+      viewer.scene.debugShowFramesPerSecond = true;
+    })();
+  </script>
+</body>
+</html>
